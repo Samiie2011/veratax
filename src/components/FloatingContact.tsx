@@ -130,19 +130,32 @@ export default function FloatingContact() {
             </div>
           </div>
 
-          <a
-            href={item.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${item.color} ${item.shadow} w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer relative border-2 border-white/10`}
-          >
-            {item.animate && (
-              <span className="absolute inset-0 rounded-full bg-inherit animate-ping opacity-30"></span>
-            )}
-            <div className="relative z-10 flex items-center justify-center">
-              {item.icon}
+          {item.id === 'hotline' ? (
+            <div
+              className={`${item.color} ${item.shadow} w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer relative border-2 border-white/10`}
+            >
+              {item.animate && (
+                <span className="absolute inset-0 rounded-full bg-inherit animate-ping opacity-30"></span>
+              )}
+              <div className="relative z-10 flex items-center justify-center">
+                {item.icon}
+              </div>
             </div>
-          </a>
+          ) : (
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${item.color} ${item.shadow} w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer relative border-2 border-white/10`}
+            >
+              {item.animate && (
+                <span className="absolute inset-0 rounded-full bg-inherit animate-ping opacity-30"></span>
+              )}
+              <div className="relative z-10 flex items-center justify-center">
+                {item.icon}
+              </div>
+            </a>
+          )}
         </motion.div>
       ))}
     </div>
