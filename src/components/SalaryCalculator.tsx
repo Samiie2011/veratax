@@ -338,7 +338,7 @@ export default function SalaryCalculator() {
             <span>Chuẩn xác 100% Thuế & Bảo hiểm 2024-2026</span>
           </motion.div>
           <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-6">
-            Công cụ tính lương <span className="text-emerald-500">Gross sang Net</span>
+            Công cụ tính lương
           </h2>
           <div className="flex justify-center space-x-2 p-1 bg-slate-900 border border-slate-800 rounded-2xl w-fit mx-auto">
             <button 
