@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import SEO from './components/SEO';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import PainPoints from './components/PainPoints';
@@ -13,6 +14,8 @@ import WhyChooseUs from './components/WhyChooseUs';
 import FAQ from './components/FAQ';
 import CTA from './components/CTA';
 import Footer from './components/Footer';
+import FloatingContact from './components/FloatingContact';
+import SalaryCalculator from './components/SalaryCalculator';
 import QuickContact from './components/QuickContact';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
@@ -55,8 +58,27 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  const seoData = {
+    main: {
+      title: "Trang chủ",
+      description: "Dịch vụ kế toán trọn gói, thành lập doanh nghiệp và tư vấn pháp lý thuế chuyên nghiệp tại TP. HCM. Hỗ trợ tính lương Gross-Net miễn phí."
+    },
+    privacy: {
+      title: "Chính sách bảo mật",
+      description: "Chính sách bảo mật thông tin khách hàng tại Veratax."
+    },
+    terms: {
+      title: "Điều khoản sử dụng",
+      description: "Điều khoản sử dụng dịch vụ và website Veratax."
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-950">
+      <SEO 
+        title={seoData[currentPage].title} 
+        description={seoData[currentPage].description} 
+      />
       <Navbar />
       <main>
         {currentPage === 'main' && (
@@ -66,7 +88,9 @@ export default function App() {
             <Services />
             <Process />
             <WhyChooseUs />
+            <SalaryCalculator />
             <FAQ />
+            <QuickContact />
             <CTA />
           </>
         )}
@@ -74,7 +98,7 @@ export default function App() {
         {currentPage === 'terms' && <TermsOfService />}
       </main>
       <Footer />
-      <QuickContact />
+      <FloatingContact />
     </div>
   );
 }

@@ -1,43 +1,195 @@
-import React from 'react';
-import { Phone, MapPin, MessageCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion } from 'motion/react';
+import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function QuickContact() {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    service: 'Kế toán trọn gói',
+    message: ''
+  });
+
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const validatePhone = (phone: string) => {
+    const regex = /^(0[3|5|7|8|9])([0-9]{8})$/;
+    return regex.test(phone);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validatePhone(formData.phone)) {
+      setErrorMsg('Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0).');
+      setStatus('error');
+      return;
+    }
+
+    setStatus('sending');
+    setErrorMsg('');
+
+    try {
+      const formattedMessage = `Họ và tên: ${formData.name}\nSố điện thoại: ${formData.phone}\nDịch vụ quan tâm: ${formData.service}\nLời nhắn: ${formData.message || 'Không có'}`;
+      
+      // Attempt to send to webhook if URL is provided, but don't fail if it doesn't work
+      const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
+      
+      if (webhookUrl && webhookUrl !== '') {
+        try {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              ...formData,
+              formattedMessage,
+              source: 'Veratax Web',
+              timestamp: new Date().toISOString()
+            }),
+          });
+        } catch (webhookError) {
+          console.warn('Webhook delivery failed, proceeding to Zalo redirect:', webhookError);
+        }
+      }
+
+      // Copy message to clipboard so user can easily paste in Zalo
+      try {
+        await navigator.clipboard.writeText(formattedMessage);
+      } catch (clipboardError) {
+        console.warn('Clipboard write failed:', clipboardError);
+      }
+
+      setStatus('success');
+      
+      // Auto redirect to Zalo
+      setTimeout(() => {
+        window.open('https://zalo.me/0858849936', '_blank');
+        setFormData({ name: '', phone: '', service: 'Kế toán trọn gói', message: '' });
+        // Don't reset status immediately so they can see the success message
+      }, 2000);
+
+    } catch (error: any) {
+      console.error('Unexpected error:', error);
+      setStatus('error');
+      setErrorMsg('Có lỗi xảy ra. Vui lòng chat trực tiếp qua nút Zalo ở góc màn hình.');
+    }
+  };
+
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end space-y-4">
-      {/* Phone with Hover Tooltip */}
-      <div className="group relative flex items-center">
-        <div className="absolute right-full mr-4 bg-slate-900 text-white text-sm whitespace-nowrap rounded-xl shadow-2xl opacity-0 translate-x-4 pointer-events-none transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto border border-slate-700">
-          <div className="p-3 space-y-3">
-            <a href="tel:0865394946" className="flex items-center space-x-3 hover:text-emerald-400 transition-colors">
-              <div className="bg-slate-800 p-2 rounded-full"><Phone className="w-4 h-4" /></div>
-              <span className="font-medium">Ms. Trinh: 0865 394 946</span>
-            </a>
-            <div className="w-full h-px bg-slate-800"></div>
-            <a href="tel:0858849936" className="flex items-center space-x-3 hover:text-emerald-400 transition-colors">
-              <div className="bg-slate-800 p-2 rounded-full"><Phone className="w-4 h-4" /></div>
-              <span className="font-medium">Mr. Duy: 0858 849 936</span>
-            </a>
+    <section id="contact-form" className="py-16 bg-slate-950">
+      <div className="max-w-4xl mx-auto px-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-8 md:p-12 rounded-3xl shadow-2xl"
+        >
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-4">
+              Nhận Tư Vấn <span className="text-emerald-400 font-black">Miễn Phí</span>
+            </h2>
+            <p className="text-slate-400">Để lại thông tin, chuyên viên Veratax sẽ liên hệ hỗ trợ bạn trong 5 phút.</p>
           </div>
-          {/* Triangle pointing to circle */}
-          <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-slate-900 border-t border-r border-slate-700 rotate-45"></div>
-        </div>
-        
-        <button className="w-14 h-14 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-xl shadow-red-600/30 transition-transform hover:scale-110 isolate cursor-pointer relative focus:outline-none">
-          <div className="absolute inset-0 rounded-full border border-red-500 animate-ping opacity-75"></div>
-          <Phone className="w-6 h-6 animate-pulse" />
-        </button>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">Họ và tên</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Nguyễn Văn A"
+                  className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">Số điện thoại (Zalo)</label>
+                <input
+                  required
+                  type="tel"
+                  placeholder="0912 345 678"
+                  className={`w-full bg-slate-800/50 border ${status === 'error' && errorMsg.includes('Số điện thoại') ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all`}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300">Dịch vụ quan tâm</label>
+              <select
+                className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all appearance-none"
+                value={formData.service}
+                onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+              >
+                <option value="Kế toán trọn gói">Dịch vụ kế toán trọn gói</option>
+                <option value="Thành lập doanh nghiệp">Thành lập doanh nghiệp</option>
+                <option value="Thay đổi giấy phép">Thay đổi giấy phép kinh doanh</option>
+                <option value="BHXH - Nhân sự">Bảo hiểm xã hội & Nhân sự</option>
+                <option value="Tư vấn Thuế - Pháp lý">Tư vấn Thuế & Pháp lý</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300">Lời nhắn (không bắt buộc)</label>
+              <textarea
+                rows={3}
+                placeholder="Nội dung cần hỗ trợ..."
+                className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              />
+            </div>
+
+            <div className="pt-4">
+              <button
+                disabled={status === 'sending'}
+                type="submit"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-1 flex items-center justify-center space-x-2"
+              >
+                {status === 'sending' ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>ĐANG GỬI...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    <span>GỬI YÊU CẦU NGAY</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {status === 'success' && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center space-x-3 text-emerald-400"
+              >
+                <CheckCircle className="w-6 h-6 flex-shrink-0" />
+                <p className="text-sm font-medium">Gửi thành công! Nội dung yêu cầu đã được tự động sao chép. Bạn chỉ cần dán (Paste) và gửi trong Zalo!</p>
+              </motion.div>
+            )}
+
+            {status === 'error' && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center space-x-3 text-red-400"
+              >
+                <AlertCircle className="w-6 h-6 flex-shrink-0" />
+                <p className="text-sm font-medium">{errorMsg}</p>
+              </motion.div>
+            )}
+          </form>
+        </motion.div>
       </div>
-
-      {/* Zalo */}
-      <a href="https://zalo.me/0858849936" target="_blank" rel="noopener noreferrer" className="relative w-14 h-14 bg-[#0068FF] hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-blue-500/30 transition-transform hover:scale-110">
-        <MessageCircle className="w-6 h-6 opacity-0" />
-        <span className="absolute text-[13px] font-black tracking-wide">Zalo</span>
-      </a>
-
-      {/* Map Address */}
-      <a href="https://maps.google.com/?q=323+Cách+Mạng+Tháng+Tám,+Phường+Hòa+Hưng,+Thành+phố+Hồ+Chí+Minh" target="_blank" rel="noopener noreferrer" className="w-14 h-14 bg-white border border-slate-200 text-emerald-600 rounded-full flex items-center justify-center shadow-xl hover:bg-slate-50 transition-transform hover:scale-110">
-        <MapPin className="w-6 h-6" />
-      </a>
-    </div>
+    </section>
   );
 }

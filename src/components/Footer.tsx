@@ -68,7 +68,7 @@ export default function Footer() {
         <div className="border-t border-slate-800 pt-10">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 text-xs">
             <p>© {currentYear} CÔNG TY TNHH VERATAX. Tất cả quyền được bảo lưu.</p>
-            <div className="flex space-x-6">
+            <div className="flex space-x-6 mb-4 md:mb-0">
               <a href="#privacy" className="hover:text-white transition-colors">Chính sách bảo mật</a>
               <a href="#terms" className="hover:text-white transition-colors">Điều khoản dịch vụ</a>
             </div>
