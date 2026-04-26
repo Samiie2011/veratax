@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Phone, Mail, MapPin, Facebook, Linkedin, ShieldCheck, ChevronRight } from 'lucide-react';
 import { seoKeywords } from '../data/keywords';
-import logo from '../assest/logo.png';
+import logo from '../assets/logo.png';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
