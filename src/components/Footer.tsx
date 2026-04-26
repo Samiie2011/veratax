@@ -12,7 +12,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div className="space-y-6">
             <div className="flex items-center space-x-3 text-white">
-              <div className="bg-white p-1 rounded-full"><img src="/Logo.png" alt="Veratax Logo" className="w-14 h-14 object-contain rounded-full" /></div>
+              <div className="bg-white p-1 rounded-full"><img src="/logo.png" alt="Veratax Logo" className="w-14 h-14 object-contain rounded-full" /></div>
               <span className="text-4xl font-display font-bold tracking-tight">VERATAX</span>
             </div>
             <p className="text-sm leading-relaxed">
