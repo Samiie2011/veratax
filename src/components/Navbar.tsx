@@ -15,11 +15,20 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
-    { name: 'Dịch vụ', href: '#services' },
-    { name: 'Quy trình', href: '#process' },
-    { name: 'Vì sao chọn chúng tôi', href: '#why-us' },
-    { name: 'FAQ', href: '#faq' },
+    { name: 'Dịch vụ', id: 'services', href: '#services' },
+    { name: 'Quy trình', id: 'process', href: '#process' },
+    { name: 'Vì sao chọn chúng tôi', id: 'why-us', href: '#why-us' },
+    { name: 'Công cụ tính lương', id: 'salary-tool', href: '#salary-tool' },
+    { name: 'FAQ', id: 'faq', href: '#faq' },
+    { name: 'Tin tức', id: 'news', href: '#news' },
   ];
+
+  const currentHash = typeof window !== 'undefined' ? window.location.hash || '#' : '#';
+
+  const isActive = (href: string) => {
+    if (href === '#' && currentHash === '#') return true;
+    return currentHash === href;
+  };
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
@@ -35,9 +44,14 @@ export default function Navbar() {
               <a
                 key={link.name}
                 href={link.href}
-                className={`text-sm font-medium transition-colors ${isScrolled ? 'text-slate-600 hover:text-emerald-600' : 'text-slate-100/90 hover:text-white'}`}
+                className={`text-sm font-bold tracking-tight transition-all duration-300 relative group ${
+                  isActive(link.href)
+                    ? (isScrolled ? 'text-emerald-600' : 'text-emerald-400')
+                    : (isScrolled ? 'text-slate-600 hover:text-emerald-600' : 'text-slate-100/90 hover:text-white')
+                }`}
               >
                 {link.name}
+                <span className={`absolute -bottom-1 left-0 h-0.5 bg-emerald-500 transition-all duration-300 ${isActive(link.href) ? 'w-full' : 'w-0 group-hover:w-full'}`} />
               </a>
             ))}
             <a
@@ -71,7 +85,11 @@ export default function Navbar() {
                 <a
                   key={link.name}
                   href={link.href}
-                  className="block text-base font-medium text-slate-600 hover:text-emerald-600 px-4 py-2"
+                  className={`block text-base font-bold px-4 py-3 rounded-xl transition-all ${
+                    isActive(link.href) 
+                      ? 'bg-emerald-50 text-emerald-600' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-600'
+                  }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.name}

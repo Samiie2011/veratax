@@ -19,9 +19,12 @@ import SalaryCalculator from './components/SalaryCalculator';
 import QuickContact from './components/QuickContact';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import NewsHub from './components/NewsHub';
+import NewsImport from './components/NewsImport';
+import SchemaMarkup from './components/SchemaMarkup';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'main' | 'privacy' | 'terms'>('main');
+  const [currentPage, setCurrentPage] = useState<'main' | 'privacy' | 'terms' | 'news' | 'admin-news'>('main');
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -32,6 +35,12 @@ export default function App() {
         window.scrollTo(0, 0);
       } else if (hash === '#terms') {
         setCurrentPage('terms');
+        window.scrollTo(0, 0);
+      } else if (hash === '#news') {
+        setCurrentPage('news');
+        window.scrollTo(0, 0);
+      } else if (hash === '#admin-news') {
+        setCurrentPage('admin-news');
         window.scrollTo(0, 0);
       } else {
         setCurrentPage(prevPage => {
@@ -70,6 +79,14 @@ export default function App() {
     terms: {
       title: "Điều khoản sử dụng",
       description: "Điều khoản sử dụng dịch vụ và website Veratax."
+    },
+    news: {
+      title: "Tin tức & Kiến thức",
+      description: "Cập nhật kiến thức pháp luật, thuế và kế toán doanh nghiệp mới nhất tại Veratax News Hub."
+    },
+    'admin-news': {
+      title: "Quản trị Tin tức",
+      description: "Công cụ quản trị và import bài viết cho Veratax."
     }
   };
 
@@ -79,6 +96,37 @@ export default function App() {
         title={seoData[currentPage].title} 
         description={seoData[currentPage].description} 
       />
+
+      {/* Schema.org Structured Data */}
+      <SchemaMarkup 
+        type="Organization"
+        data={{
+          name: "VERATAX",
+          url: "https://veratax.vn",
+          logo: "https://veratax.vn/logo.png",
+          description: "Dịch vụ kế toán, thuế và bảo hiểm xã hội chuyên nghiệp cho doanh nghiệp.",
+          address: {
+            "@type": "PostalAddress",
+            "addressLocality": "Hồ Chí Minh",
+            "addressCountry": "VN"
+          },
+          contactPoint: {
+            "@type": "ContactPoint",
+            "telephone": "+84-865-394-946",
+            "contactType": "customer service"
+          }
+        }}
+      />
+
+      {/* Analytics (Mock scripts for production readiness) */}
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+      <script dangerouslySetInnerHTML={{ __html: `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-XXXXXXXXXX');
+      `}} />
+
       <Navbar />
       <main>
         {currentPage === 'main' && (
@@ -96,6 +144,8 @@ export default function App() {
         )}
         {currentPage === 'privacy' && <PrivacyPolicy />}
         {currentPage === 'terms' && <TermsOfService />}
+        {currentPage === 'news' && <NewsHub />}
+        {currentPage === 'admin-news' && <NewsImport />}
       </main>
       <Footer />
       <FloatingContact />

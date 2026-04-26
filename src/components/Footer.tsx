@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Phone, Mail, MapPin, Facebook, Linkedin, ShieldCheck, ChevronRight } from 'lucide-react';
+import { seoKeywords } from '../data/keywords';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -75,7 +76,7 @@ export default function Footer() {
           </div>
           
           <div className="sr-only">
-            Từ khóa: dịch vụ xuất hóa đơn điện tử, hỗ trợ xuất hóa đơn điện tử, dịch vụ theo dõi bảo hiểm xã hội, dịch vụ báo tăng báo giảm bảo hiểm xã hội, dịch vụ bảo hiểm xã hội cho doanh nghiệp, theo dõi lao động và bảo hiểm xã hội, dịch vụ kế toán thuế và bảo hiểm xã hội, dịch vụ kế toán thuế và hóa đơn điện tử, tư vấn hóa đơn điện tử, xử lý hóa đơn sai sót, kiểm tra hóa đơn đầu vào đầu ra, dịch vụ lương và bảo hiểm xã hội.
+            {seoKeywords.join(', ')}
           </div>
         </div>
       </div>
