@@ -152,9 +152,29 @@ export default function NewsHub() {
         </article>
 
         <div className="mt-20 pt-10 border-t border-slate-800">
-          <p className="text-slate-500 text-sm italic">
+          <p className="text-slate-500 text-sm italic mb-10">
             * Nội dung bài viết mang tính chất tham khảo kiến thức. Để được tư vấn chi tiết cho trường hợp cụ thể của doanh nghiệp, vui lòng liên hệ trực tiếp với đội ngũ chuyên gia Veratax qua Hotline.
           </p>
+
+          <div className="flex justify-center">
+            <button
+              onClick={() => {
+                setSelectedArticle(null);
+                setTimeout(() => {
+                  const newsSection = document.getElementById('news');
+                  if (newsSection) {
+                    newsSection.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }, 10);
+              }}
+              className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-full font-bold transition-all shadow-xl shadow-emerald-500/20 active:scale-95 group uppercase text-xs tracking-widest"
+            >
+              <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+              <span>Quay lại trang tin tức</span>
+            </button>
+          </div>
         </div>
       </motion.div>
     );
