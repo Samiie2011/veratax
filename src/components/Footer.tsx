@@ -20,8 +20,9 @@ export default function Footer() {
               Đối tác đồng hành toàn diện về pháp lý, kế toán, thuế, hóa đơn và bảo hiểm xã hội. Giúp doanh nghiệp vận hành đúng luật, kiểm soát rủi ro ngay từ những nghiệp vụ phát sinh hàng ngày.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="hover:text-white transition-colors"><Facebook className="w-5 h-5" /></a>
-              <a href="#" className="hover:text-white transition-colors"><Linkedin className="w-5 h-5" /></a>
+              <div className="text-slate-400 cursor-default"><Facebook className="w-5 h-5" /></div>
+              <div className="text-slate-400 cursor-default"><Linkedin className="w-5 h-5" /></div>
+              <div className="text-slate-400 cursor-default"><Mail className="w-5 h-5" /></div>
             </div>
           </div>
 
