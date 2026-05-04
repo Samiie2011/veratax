@@ -118,35 +118,32 @@ const CustomNumberInput = ({ value, onChange, label, icon }: CustomNumberInputPr
   );
 };
 
-// --- CONSTANTS & TYPES ---
+import { 
+  calculateGrossToNet, 
+  calculateNetToGross, 
+  PeriodMode, 
+  InsuranceMode,
+  REGULATION_CONFIG 
+} from '../services/salaryCalculator';
+
 type CalcMode = 'GROSS_TO_NET' | 'NET_TO_GROSS';
-type Regulation = 'REGION_2024' | 'REGION_2026';
-type InsuranceBase = 'OFFICIAL' | 'OTHER';
+type Regulation = PeriodMode;
+type InsuranceBase = InsuranceMode;
 
 const LAW = {
-  CO_SO: 2340000,
   VUNG: [
-    { id: 1, name: 'Vùng I', salary: 4960000 },
-    { id: 2, name: 'Vùng II', salary: 4410000 },
-    { id: 3, name: 'Vùng III', salary: 3860000 },
-    { id: 4, name: 'Vùng IV', salary: 3450000 }
+    { id: 1, name: 'Vùng I', salary: REGULATION_CONFIG.REGION_2024.regionalMinSalaries[1] },
+    { id: 2, name: 'Vùng II', salary: REGULATION_CONFIG.REGION_2024.regionalMinSalaries[2] },
+    { id: 3, name: 'Vùng III', salary: REGULATION_CONFIG.REGION_2024.regionalMinSalaries[3] },
+    { id: 4, name: 'Vùng IV', salary: REGULATION_CONFIG.REGION_2024.regionalMinSalaries[4] }
   ],
   REGULATIONS: {
     REGION_2024: {
       label: 'Từ 01/07/2024 - 31/12/2025',
-      self: 11000000,
-      dependent: 4400000
     },
     REGION_2026: {
       label: 'Từ 01/01/2026',
-      self: 15500000,
-      dependent: 6200000
     }
-  },
-  RATES: {
-    BHXH: 0.08,
-    BHYT: 0.015,
-    BHTN: 0.01
   }
 };
 
@@ -159,132 +156,6 @@ const parseVND = (str: string) => {
   const numeric = str.replace(/\D/g, '');
   if (!numeric) return 0;
   return parseInt(numeric, 10) || 0;
-};
-
-// --- HELPER FUNCTIONS ---
-
-/**
- * Calculates progressive tax based on taxable income
- */
-const calculateTaxDetails = (taxableIncome: number) => {
-  if (taxableIncome <= 0 || isNaN(taxableIncome)) return { total: 0, blocks: [] };
-
-  const brackets = [
-    { level: 1, max: 5000000, rate: 0.05, sub: 0 },
-    { level: 2, max: 10000000, rate: 0.1, sub: 250000 },
-    { level: 3, max: 18000000, rate: 0.15, sub: 750000 },
-    { level: 4, max: 32000000, rate: 0.2, sub: 1650000 },
-    { level: 5, max: 52000000, rate: 0.25, sub: 3250000 },
-    { level: 6, max: 80000000, rate: 0.3, sub: 5850000 },
-    { level: 7, max: Infinity, rate: 0.35, sub: 9850000 }
-  ];
-
-  let totalTax = 0;
-  const blocks = [];
-  let remaining = taxableIncome;
-  let prevMax = 0;
-
-  for (const b of brackets) {
-    if (remaining <= 0) break;
-    const currentRange = Math.min(b.max - prevMax, remaining);
-    const taxInThisLevel = currentRange * b.rate;
-    
-    if (taxInThisLevel > 0) {
-      blocks.push({
-        level: b.level,
-        incomeInRange: currentRange,
-        rate: b.rate * 100,
-        tax: taxInThisLevel
-      });
-    }
-    
-    totalTax += taxInThisLevel;
-    remaining -= currentRange;
-    prevMax = b.max;
-  }
-
-  return { total: Math.round(totalTax), blocks };
-};
-
-/**
- * Perform GROSS -> NET calculation
- */
-const grossToNet = (params: {
-  amount: number;
-  regionSalary: number;
-  dependents: number;
-  regConfig: { self: number; dependent: number };
-  insuranceBaseType: InsuranceBase;
-  insuranceCustomAmount: number;
-}) => {
-  const { amount, regionSalary, dependents, regConfig, insuranceBaseType, insuranceCustomAmount } = params;
-
-  // 1. Determine Insurance Base
-  const baseForInsurance = insuranceBaseType === 'OFFICIAL' ? amount : insuranceCustomAmount;
-
-  // 2. Calculate Insurance with caps
-  const capXH_YT = LAW.CO_SO * 20;
-  const capTN = regionSalary * 20;
-
-  const bhxhBase = Math.min(baseForInsurance, capXH_YT);
-  const bhytBase = Math.min(baseForInsurance, capXH_YT);
-  const bhtnBase = Math.min(baseForInsurance, capTN);
-
-  const bhxh = bhxhBase * LAW.RATES.BHXH;
-  const bhyt = bhytBase * LAW.RATES.BHYT;
-  const bhtn = bhtnBase * LAW.RATES.BHTN;
-  const totalInsurance = bhxh + bhyt + bhtn;
-
-  // 3. Tax Calculation
-  const incomeBeforeTax = amount - totalInsurance;
-  const totalDeduction = regConfig.self + (dependents * regConfig.dependent);
-  const taxableIncome = Math.max(0, incomeBeforeTax - totalDeduction);
-  const taxInfo = calculateTaxDetails(taxableIncome);
-
-  const net = amount - totalInsurance - taxInfo.total;
-
-  return {
-    gross: amount,
-    net,
-    bhxh,
-    bhyt,
-    bhtn,
-    totalInsurance,
-    incomeBeforeTax,
-    totalDeduction,
-    taxableIncome,
-    taxInfo
-  };
-};
-
-/**
- * Perform NET -> GROSS calculation using binary search
- */
-const netToGross = (params: {
-  amount: number;
-  regionSalary: number;
-  dependents: number;
-  regConfig: { self: number; dependent: number };
-  insuranceBaseType: InsuranceBase;
-  insuranceCustomAmount: number;
-}) => {
-  // Binary search for Gross
-  let low = params.amount;
-  let high = params.amount * 5; // Reasonable ceiling
-  let gross = params.amount;
-
-  for (let i = 0; i < 50; i++) {
-    const mid = (low + high) / 2;
-    const test = grossToNet({ ...params, amount: mid });
-    if (test.net < params.amount) {
-      low = mid;
-    } else {
-      high = mid;
-    }
-  }
-  
-  gross = Math.round(high);
-  return grossToNet({ ...params, amount: gross });
 };
 
 // --- MAIN COMPONENT ---
@@ -302,22 +173,23 @@ export default function SalaryCalculator() {
   const amount = parseVND(amountStr);
   const customInsurance = parseVND(customInsuranceStr);
   const region = LAW.VUNG.find(v => v.id === regionId)!;
-  const regConfig = LAW.REGULATIONS[regulation];
 
   const results = useMemo(() => {
     const calcParams = {
-      amount,
-      regionSalary: region.salary,
-      dependents,
-      regConfig,
-      insuranceBaseType: insuranceType,
-      insuranceCustomAmount: customInsurance
+      grossIncome: mode === 'GROSS_TO_NET' ? amount : 0, 
+      dependentCount: dependents,
+      region: regionId as 1 | 2 | 3 | 4,
+      period: regulation,
+      insuranceMode: insuranceType,
+      customInsuranceSalary: customInsurance
     };
 
-    return mode === 'GROSS_TO_NET' 
-      ? grossToNet(calcParams) 
-      : netToGross(calcParams);
-  }, [mode, regulation, amount, dependents, insuranceType, customInsurance, region, regConfig]);
+    if (mode === 'GROSS_TO_NET') {
+      return calculateGrossToNet(calcParams);
+    } else {
+      return calculateNetToGross({ ...calcParams, targetNetIncome: amount });
+    }
+  }, [mode, regulation, amount, dependents, insuranceType, customInsurance, regionId]);
 
   const handleAmountChange = (val: string) => {
     const numeric = val.replace(/\D/g, '');
@@ -472,12 +344,12 @@ export default function SalaryCalculator() {
                <div className="grid grid-cols-2 gap-8">
                   <div className="space-y-1">
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">LƯƠNG GROSS</p>
-                    <p className="text-2xl md:text-3xl font-display font-black text-white">{formatVND(results.gross)}</p>
+                    <p className="text-2xl md:text-3xl font-display font-black text-white">{formatVND(results.grossIncome)}</p>
                   </div>
                   <div className="space-y-1 text-right">
                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">LƯƠNG NET (THỰC NHẬN)</p>
                     <p className="text-3xl md:text-4xl font-display font-black text-emerald-500 tracking-tighter shadow-emerald-500/10 drop-shadow-sm">
-                      {formatVND(results.net)}
+                      {formatVND(results.netIncome)}
                     </p>
                   </div>
                </div>
@@ -502,24 +374,25 @@ export default function SalaryCalculator() {
 
               <div className="bg-slate-900/50 border border-slate-800 rounded-3xl overflow-hidden">
                 {activeTab === 'details' ? (
-                  <div className="p-6">
+                  <div className="p-6 space-y-8">
+                    {/* Employee Deductions */}
                     <table className="w-full text-left">
                       <tbody className="divide-y divide-slate-800/50">
                         <tr className="group">
                           <td className="py-4 text-slate-400 group-hover:text-white transition-colors">Lương cơ sở tính bảo hiểm</td>
-                          <td className="py-4 text-right font-bold text-white">{formatVND(insuranceType === 'OFFICIAL' ? results.gross : customInsurance)}</td>
+                          <td className="py-4 text-right font-bold text-white">{formatVND(results.configUsed.insuranceSalaryUsed)}</td>
                         </tr>
                         <tr className="group">
                           <td className="py-4 text-slate-400 group-hover:text-white transition-colors">Bảo hiểm xã hội (8%)</td>
-                          <td className="py-4 text-right font-medium text-red-400">-{formatVND(results.bhxh)}</td>
+                          <td className="py-4 text-right font-medium text-red-400">-{formatVND(results.employeeInsurance.bhxh)}</td>
                         </tr>
                         <tr className="group">
                           <td className="py-4 text-slate-400 group-hover:text-white transition-colors">Bảo hiểm y tế (1.5%)</td>
-                          <td className="py-4 text-right font-medium text-red-400">-{formatVND(results.bhyt)}</td>
+                          <td className="py-4 text-right font-medium text-red-400">-{formatVND(results.employeeInsurance.bhyt)}</td>
                         </tr>
                         <tr className="group">
                           <td className="py-4 text-slate-400 group-hover:text-white transition-colors">Bảo hiểm thất nghiệp (1%)</td>
-                          <td className="py-4 text-right font-medium text-red-400">-{formatVND(results.bhtn)}</td>
+                          <td className="py-4 text-right font-medium text-red-400">-{formatVND(results.employeeInsurance.bhtn)}</td>
                         </tr>
                         <tr className="bg-slate-950/40">
                           <td className="py-4 pl-4 text-slate-300 font-bold uppercase text-[10px] tracking-widest">Thu nhập trước thuế</td>
@@ -527,51 +400,87 @@ export default function SalaryCalculator() {
                         </tr>
                         <tr className="group">
                           <td className="py-4 text-slate-400 group-hover:text-white transition-colors">
-                            Giảm trừ gia cảnh 
-                            <span className="ml-2 text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-500">
-                              BT: {formatVND(regConfig.self)} + {dependents} PT
-                            </span>
+                            Giảm trừ bản thân
                           </td>
-                          <td className="py-4 text-right font-medium text-slate-500">{formatVND(results.totalDeduction)}</td>
+                          <td className="py-4 text-right font-medium text-slate-500">-{formatVND(results.personalDeduction)}</td>
                         </tr>
                         <tr className="group">
-                          <td className="py-4 text-slate-400 group-hover:text-white transition-colors">Thu nhập tính thuế</td>
+                          <td className="py-4 text-slate-400 group-hover:text-white transition-colors">
+                            Giảm trừ người phụ thuộc ({dependents} người)
+                          </td>
+                          <td className="py-4 text-right font-medium text-slate-500">-{formatVND(results.dependentDeduction)}</td>
+                        </tr>
+                        <tr className="group">
+                          <td className="py-4 text-slate-400 group-hover:text-white transition-colors">Thu nhập chịu thuế</td>
                           <td className="py-4 text-right font-bold text-amber-500">{formatVND(results.taxableIncome)}</td>
                         </tr>
                         <tr className="group">
                           <td className="py-4 text-slate-400 group-hover:text-white transition-colors">Thuế thu nhập cá nhân (TNCN)</td>
-                          <td className="py-4 text-right font-black text-red-500">-{formatVND(results.taxInfo.total)}</td>
+                          <td className="py-4 text-right font-black text-red-500">-{formatVND(results.personalIncomeTax)}</td>
                         </tr>
                       </tbody>
                     </table>
+
+                    {/* Employer Contributions */}
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Người sử dụng lao động trả</h4>
+                      <table className="w-full text-left">
+                        <tbody className="divide-y divide-slate-800/50">
+                          <tr className="group">
+                            <td className="py-4 text-slate-400 group-hover:text-white transition-colors">Lương GROSS</td>
+                            <td className="py-4 text-right font-bold text-white">{formatVND(results.grossIncome)}</td>
+                          </tr>
+                          <tr className="group">
+                            <td className="py-4 text-slate-400 group-hover:text-white transition-colors">BHXH (17%)</td>
+                            <td className="py-4 text-right font-medium text-slate-300">{formatVND(results.employerInsurance.bhxh)}</td>
+                          </tr>
+                          <tr className="group">
+                            <td className="py-4 text-slate-400 group-hover:text-white transition-colors">Bảo hiểm tai nạn lao động, bệnh nghề nghiệp (0,5%)</td>
+                            <td className="py-4 text-right font-medium text-slate-300">{formatVND(results.employerInsurance.bhtnldBnn)}</td>
+                          </tr>
+                          <tr className="group">
+                            <td className="py-4 text-slate-400 group-hover:text-white transition-colors">BHYT (3%)</td>
+                            <td className="py-4 text-right font-medium text-slate-300">{formatVND(results.employerInsurance.bhyt)}</td>
+                          </tr>
+                          <tr className="group">
+                            <td className="py-4 text-slate-400 group-hover:text-white transition-colors">BHTN (1%)</td>
+                            <td className="py-4 text-right font-medium text-slate-300">{formatVND(results.employerInsurance.bhtn)}</td>
+                          </tr>
+                          <tr className="bg-slate-950/40 border-t border-slate-700">
+                            <td className="py-4 pl-4 text-emerald-500 font-bold uppercase text-[10px] tracking-widest">Tổng chi phí doanh nghiệp đóng</td>
+                            <td className="py-4 pr-4 text-right text-lg font-black text-emerald-500">{formatVND(results.employerTotalCost)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ) : (
                   <div className="p-6">
                     <div className="bg-slate-950/50 rounded-2xl border border-slate-800 p-4 mb-6">
                       <div className="flex justify-between items-center">
                         <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">Tổng tiền thuế</span>
-                        <span className="text-xl font-black text-amber-500">{formatVND(results.taxInfo.total)}</span>
+                        <span className="text-xl font-black text-amber-500">{formatVND(results.personalIncomeTax)}</span>
                       </div>
                     </div>
                     <table className="w-full text-left text-sm">
                       <thead>
                         <tr className="text-slate-600 border-b border-slate-800 uppercase tracking-widest text-[9px] font-black">
                           <td className="pb-4">Bậc Thuế</td>
-                          <td className="pb-4">Thu nhập trong bậc</td>
-                          <td className="pb-4">% Thuế</td>
-                          <td className="pb-4 text-right">Tiền Thuế</td>
+                          <td className="pb-4">Lương chịu thuế</td>
+                          <td className="pb-4">% Thuế suất</td>
+                          <td className="pb-4 text-right">Tiền nộp</td>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/30">
-                        {results.taxInfo.blocks.map((b) => (
+                        {results.taxDetails.map((b) => (
                           <tr key={b.level} className="hover:bg-white/5 transition-colors">
                             <td className="py-4 font-bold text-slate-300">Bậc {b.level}</td>
-                            <td className="py-4 text-slate-400">{formatVND(b.incomeInRange)}</td>
+                            <td className="py-4 text-slate-400">{formatVND(b.taxableAmount)}</td>
                             <td className="py-4 font-mono text-emerald-400 font-bold">{b.rate}%</td>
-                            <td className="py-4 text-right font-black text-white">{formatVND(b.tax)}</td>
+                            <td className="py-4 text-right font-black text-white">{formatVND(b.taxAmount)}</td>
                           </tr>
                         ))}
-                        {results.taxInfo.blocks.length === 0 && (
+                        {results.taxDetails.length === 0 && (
                           <tr>
                             <td colSpan={4} className="py-12 text-center text-slate-600 italic">Thu nhập tính thuế = 0. Không phát sinh thuế TNCN.</td>
                           </tr>

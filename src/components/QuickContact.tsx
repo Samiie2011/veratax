@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Send, CheckCircle, AlertCircle, Loader2, ChevronDown } from 'lucide-react';
 
 export default function QuickContact() {
   const [formData, setFormData] = useState({
@@ -122,17 +122,22 @@ export default function QuickContact() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-300">Dịch vụ quan tâm</label>
-              <select
-                className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all appearance-none"
-                value={formData.service}
-                onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-              >
-                <option value="Kế toán trọn gói">Dịch vụ kế toán trọn gói</option>
-                <option value="Thành lập doanh nghiệp">Thành lập doanh nghiệp</option>
-                <option value="Thay đổi giấy phép">Thay đổi giấy phép kinh doanh</option>
-                <option value="BHXH - Nhân sự">Bảo hiểm xã hội & Nhân sự</option>
-                <option value="Tư vấn Thuế - Pháp lý">Tư vấn Thuế & Pháp lý</option>
-              </select>
+              <div className="relative group">
+                <select
+                  className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all appearance-none cursor-pointer"
+                  value={formData.service}
+                  onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                >
+                  <option value="Kế toán trọn gói">Dịch vụ kế toán trọn gói</option>
+                  <option value="Thành lập doanh nghiệp">Thành lập doanh nghiệp</option>
+                  <option value="Thay đổi giấy phép">Thay đổi giấy phép kinh doanh</option>
+                  <option value="BHXH - Nhân sự">Bảo hiểm xã hội & Nhân sự</option>
+                  <option value="Tư vấn Thuế - Pháp lý">Tư vấn Thuế & Pháp lý</option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-emerald-500 transition-colors">
+                  <ChevronDown className="w-4 h-4" strokeWidth={3} />
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">

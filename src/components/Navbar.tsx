@@ -1,19 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, Menu, X, Phone } from 'lucide-react';
+import { ShieldCheck, Menu, X, Phone, LogIn, LayoutDashboard, LogOut } from 'lucide-react';
+import { getCurrentUser, clearAuthSession } from '../services/AuthService';
 import logo from '../assets/logo.png';
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState(getCurrentUser());
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    // Check session periodically or on focus
+    const checkAuth = () => {
+      setUser(getCurrentUser());
+    };
+    
+    window.addEventListener('focus', checkAuth);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('focus', checkAuth);
+    };
   }, []);
+
+  const handleLogout = () => {
+    clearAuthSession();
+    setUser(null);
+    window.location.hash = '#';
+  };
 
   const navLinks = [
     { name: 'Dịch vụ', id: 'services', href: '#services' },
@@ -23,6 +42,10 @@ export default function Navbar() {
     { name: 'FAQ', id: 'faq', href: '#faq' },
     { name: 'Tin tức', id: 'news', href: '#news' },
   ];
+
+  const handleLoginClick = () => {
+    window.location.hash = '#login';
+  };
 
   const currentHash = typeof window !== 'undefined' ? window.location.hash || '#' : '#';
 
@@ -40,7 +63,7 @@ export default function Navbar() {
             <span className="text-2xl font-display font-bold text-emerald-800 pr-3 tracking-tight">VERATAX</span>
           </a>
 
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden xl:flex items-center space-x-8">
             {navLinks.map((link) => (
               <a
                 key={link.name}
@@ -62,10 +85,42 @@ export default function Navbar() {
               <Phone className="w-4 h-4" />
               <span>0865 394 946</span>
             </a>
+
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <a
+                  href="#erp"
+                  className={`flex items-center space-x-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all shadow-lg active:scale-95 ${
+                    isScrolled ? 'bg-slate-900 text-white shadow-slate-900/10' : 'bg-white text-slate-900 shadow-white/10'
+                  }`}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>ERP</span>
+                </a>
+                <button
+                  onClick={handleLogout}
+                  className={`p-2.5 rounded-full transition-all hover:bg-red-50 hover:text-red-600 ${
+                    isScrolled ? 'text-slate-400' : 'text-slate-100'
+                  }`}
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleLoginClick}
+                className={`flex items-center space-x-2 px-6 py-2.5 rounded-full text-sm font-bold tracking-tight transition-all shadow-lg active:scale-95 ${
+                  isScrolled ? 'bg-slate-900 text-white shadow-slate-900/10 hover:bg-slate-800' : 'bg-white text-slate-900 shadow-white/10 hover:bg-slate-50'
+                }`}
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Đăng nhập</span>
+              </button>
+            )}
           </div>
 
           <button
-            className="md:hidden text-slate-900 p-2"
+            className="xl:hidden text-slate-900 p-2"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className={isScrolled ? 'text-slate-900' : 'text-white'} /> : <Menu className={isScrolled ? 'text-slate-900' : 'text-white'} />}
@@ -79,7 +134,7 @@ export default function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-slate-100 md:hidden overflow-hidden"
+            className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-slate-100 xl:hidden overflow-hidden"
           >
             <div className="px-4 py-6 space-y-4">
               {navLinks.map((link) => (

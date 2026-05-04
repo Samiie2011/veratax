@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Phone, MapPin, MessageSquare, X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
+import AIChatbot from './AIChatbot';
 
 interface Message {
   role: 'user' | 'bot';
@@ -218,35 +219,39 @@ export default function FloatingContact() {
       <AnimatePresence>
         {isChatOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9, transformOrigin: 'bottom right' }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="absolute bottom-[300px] right-0 w-[350px] sm:w-[380px] h-[500px] sm:h-[550px] bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col z-[60]"
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 100) setIsChatOpen(false);
+            }}
+            className="fixed inset-0 sm:inset-auto sm:bottom-28 sm:right-0 w-full sm:w-[380px] h-full sm:h-[600px] bg-slate-900 border-t sm:border border-slate-800 sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col z-[1000]"
           >
             {/* Chatbot Header */}
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-5 border-b border-white/5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-                      <Bot className="w-6 h-6 text-emerald-500" />
-                    </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full animate-pulse" />
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-5 border-b border-white/5 flex items-center justify-between shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                    <Bot className="w-6 h-6 text-emerald-500" />
                   </div>
-                  <div>
-                    <h3 className="text-white font-display font-bold text-base tracking-tight">Veratax AI</h3>
-                    <div className="flex items-center space-x-1.5">
-                      <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Đang trực tuyến</span>
-                    </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-white font-display font-bold text-base tracking-tight">Veratax AI</h3>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Đang trực tuyến</span>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setIsChatOpen(false)}
-                  className="p-1.5 hover:bg-white/5 rounded-lg transition-colors text-slate-400 hover:text-white"
-                >
-                  <X className="w-4 h-4" />
-                </button>
               </div>
+              <button 
+                onClick={() => setIsChatOpen(false)}
+                className="p-2 hover:bg-white/5 rounded-xl transition-colors text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Messages Area */}

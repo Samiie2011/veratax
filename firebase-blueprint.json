@@ -1,0 +1,128 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and roles.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "staff"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "role"]
+    },
+    "Client": {
+      "title": "Client Company",
+      "description": "Information about client companies.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "taxId": { "type": "string" },
+        "address": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "taxId"]
+    },
+    "VaultItem": {
+      "title": "Client Vault Item",
+      "description": "Secure storage for client account credentials.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "notes": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientId", "serviceName", "username", "password"]
+    },
+    "Contract": {
+      "title": "Contract",
+      "description": "Legal service agreements with clients.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "signedDate": { "type": "string", "format": "date" },
+        "serviceFee": { "type": "number" },
+        "hasVat": { "type": "boolean" },
+        "referrerName": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clientId", "signedDate", "serviceFee"]
+    },
+    "DebtRecord": {
+      "title": "Debt Record",
+      "description": "Specific billing cycles for a contract.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "contractId": { "type": "string" },
+        "period": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "paid"] },
+        "paidAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["contractId", "period", "amount", "status"]
+    },
+    "Commission": {
+      "title": "Commission",
+      "description": "Referral commissions linked to payments.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "debtId": { "type": "string" },
+        "referrerName": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "ready"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["debtId", "amount", "status"]
+    },
+    "Attendance": {
+      "title": "Staff Attendance",
+      "description": "Daily status of staff members.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["present", "absent", "late"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["userId", "date", "status"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "History of sensitive user actions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "action": { "type": "string" },
+        "targetType": { "type": "string" },
+        "targetId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "Global user profiles." },
+    "/clients/{clientId}": { "schema": "Client", "description": "Client company directory." },
+    "/clients/{clientId}/vault/{vaultId}": { "schema": "VaultItem", "description": "Secure credentials for a company." },
+    "/contracts/{contractId}": { "schema": "Contract", "description": "Global contracts list." },
+    "/contracts/{contractId}/debts/{debtId}": { "schema": "DebtRecord", "description": "Individual billing cycles." },
+    "/commissions/{commissionId}": { "schema": "Commission", "description": "Global commission tracking." },
+    "/attendance/{attendanceId}": { "schema": "Attendance", "description": "Staff attendance reports." },
+    "/audit_logs/{logId}": { "schema": "AuditLog", "description": "System-wide activity logs." }
+  }
+}

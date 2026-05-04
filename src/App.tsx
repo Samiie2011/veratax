@@ -22,11 +22,38 @@ import TermsOfService from './components/TermsOfService';
 import NewsHub from './components/NewsHub';
 import NewsImport from './components/NewsImport';
 import SchemaMarkup from './components/SchemaMarkup';
+import Login from './components/Login';
+import ERPLayout from './components/ERP/ERPLayout';
+import Dashboard from './components/ERP/Dashboard';
+import FinanceModule from './components/ERP/FinanceModule';
+import VaultModule from './components/ERP/VaultModule';
+import AttendanceModule from './components/ERP/AttendanceModule';
+import { auth, db } from './lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { getCurrentUser, getCurrentSession } from './services/AuthService';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'main' | 'privacy' | 'terms' | 'news' | 'admin-news'>('main');
+  const [currentPage, setCurrentPage] = useState<'main' | 'privacy' | 'terms' | 'news' | 'admin-news' | 'erp' | 'login'>('main');
+  const [erpTab, setErpTab] = useState<'dashboard' | 'finance' | 'vault' | 'hr' | 'backup' | 'audit'>('dashboard');
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
+    // Phase 1: Check AuthService Session (User Requirement)
+    const session = getCurrentSession();
+    const localUser = getCurrentUser();
+
+    if (session && localUser) {
+      setUserRole(localUser.role);
+    }
+
+    // Phase 2: Maintenance of Firebase Auth (if needed by other services)
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // Keep Firebase in sync for potential storage/firestore usage
+      setAuthChecked(true);
+    });
+
     const handleHashChange = () => {
       const hash = window.location.hash || '#';
       
@@ -39,32 +66,29 @@ export default function App() {
       } else if (hash === '#news') {
         setCurrentPage('news');
         window.scrollTo(0, 0);
-      } else if (hash === '#admin-news') {
-        setCurrentPage('admin-news');
+      } else if (hash === '#erp') {
+        // Protected route check using AuthService
+        const session = getCurrentSession();
+        if (!session) {
+          window.location.hash = '#login';
+          return;
+        }
+        setCurrentPage('erp');
+        window.scrollTo(0, 0);
+      } else if (hash === '#login') {
+        setCurrentPage('login');
         window.scrollTo(0, 0);
       } else {
-        setCurrentPage(prevPage => {
-          if (prevPage !== 'main') {
-            setTimeout(() => {
-              const id = hash.replace('#', '');
-              if (id) {
-                const element = document.getElementById(id);
-                if (element) {
-                  element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-            }, 50);
-          }
-          return 'main';
-        });
+        setCurrentPage('main');
       }
     };
-
+    
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      unsubscribe();
+    };
   }, []);
 
   const seoData = {
@@ -87,6 +111,14 @@ export default function App() {
     'admin-news': {
       title: "Quản trị Tin tức",
       description: "Công cụ quản trị và import bài viết cho Veratax."
+    },
+    erp: {
+      title: "Hệ thống AI-ERP",
+      description: "Hệ thống quản trị doanh nghiệp Veratax."
+    },
+    login: {
+      title: "Đăng nhập hệ thống",
+      description: "Truy cập hệ thống nội bộ Veratax."
     }
   };
 
@@ -127,7 +159,7 @@ export default function App() {
         gtag('config', 'G-XXXXXXXXXX');
       `}} />
 
-      <Navbar />
+      {currentPage !== 'erp' && currentPage !== 'login' && <Navbar />}
       <main>
         {currentPage === 'main' && (
           <>
@@ -146,9 +178,13 @@ export default function App() {
         {currentPage === 'terms' && <TermsOfService />}
         {currentPage === 'news' && <NewsHub />}
         {currentPage === 'admin-news' && <NewsImport />}
+        {currentPage === 'login' && <Login />}
+        {currentPage === 'erp' && (
+          <ERPLayout activeTab={erpTab} onTabChange={setErpTab} />
+        )}
       </main>
-      <Footer />
-      <FloatingContact />
+      {currentPage !== 'erp' && <Footer />}
+      {currentPage !== 'erp' && <FloatingContact />}
     </div>
   );
 }

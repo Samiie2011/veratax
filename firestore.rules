@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isStaff() {
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff';
+    }
+
+    // Users Collection: Bảo mật cực nghiêm
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if false; // Không cho phép tự ý sửa đổi profile từ Client
+    }
+
+    // Clients Collection: Phân quyền theo nhân viên được gán
+    match /clients/{clientId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn() && (isAdmin() || resource.data.assignedTo == request.auth.uid);
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (isStaff() && resource.data.assignedTo == request.auth.uid);
+
+      // Vault Sub-collection: Bảo mật tuyệt đối mật khẩu
+      match /vault/{vaultId} {
+        allow read, write: if isAdmin() || 
+          (isStaff() && get(/databases/$(database)/documents/clients/$(clientId)).data.assignedTo == request.auth.uid);
+      }
+    }
+
+    // Contracts: Chỉ quản lý hợp đồng mình được gán
+    match /contracts/{contractId} {
+      allow read: if isAdmin() || 
+        (isSignedIn() && get(/databases/$(database)/documents/clients/$(resource.data.clientId)).data.assignedTo == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // Audit Logs: Chỉ App được phép viết, Admin mới được xem
+    match /audit_logs/{logId} {
+      allow create: if isSignedIn();
+      allow read: if isAdmin();
+    }
+  }
+}
